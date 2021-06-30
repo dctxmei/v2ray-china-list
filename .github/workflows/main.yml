@@ -31,6 +31,7 @@ jobs:
           curl -sSL "${CHINA_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/accelerated-domains.china
           curl -sSL "${GOOGLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/google.china
           curl -sSL "${APPLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/apple.china
+          cd ../
       - name: Configuration environment
         run: |
           git config --global user.email "dctxmei@yandex.com"
@@ -38,9 +39,11 @@ jobs:
       - name: Git push assets to "master" branch
         continue-on-error: true
         run: |
+          cd code/ || exit 1
           git add data/
           git commit -m "${{ env.RELEASE_NAME }}"
           git push origin master
+          cd ../ && rm -rf code/
   build:
     name: Build
     runs-on: ubuntu-latest
