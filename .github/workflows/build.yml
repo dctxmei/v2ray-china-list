@@ -1,12 +1,14 @@
 name: Build china-list.dat
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: '0 0 * * *'
   push:
     branches:
       - master
     paths-ignore:
-      - "**/README.md"
+      - 'README.md'
+      - 'data/*'
+      - 'LICENSE'
 jobs:
   build:
     name: Build
@@ -35,7 +37,7 @@ jobs:
 
       - name: Create `accelerated-domains.china`, `google.china` and `apple.china` lists
         run: |
-          cd code || exit 1
+          cd code/ || exit 1
           curl -sSL "${CHINA_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/accelerated-domains.china
           curl -sSL "${GOOGLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/google.china
           curl -sSL "${APPLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/apple.china
@@ -43,9 +45,9 @@ jobs:
 
       - name: Build china-list.dat file
         run: |
-          cd code || exit 1
+          cd code/ || exit 1
           go run ./ --outputdir=../
-          cd ../ && rm -rf code
+          cd ../
 
       - name: Generate china-list.dat sha256 hash
         run: |
@@ -57,22 +59,26 @@ jobs:
           sha256sum china-list.dat.xz > china-list.dat.xz.sha256sum
 
       - name: Configuration environment
-        env:
-          SECRET: ${{ secrets.SECRET }}
         run: |
-          mkdir ~/.ssh/
-          echo "${SECRET}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
           git config --global user.email "dctxmei@yandex.com"
           git config --global user.name "Dct Mei"
+
+      - name: Git push assets to "master" branch
+        continue-on-error: true
+        run: |
+          cd code/ || exit 1
+          git add data/
+          git commit -m "${{ env.RELEASE_NAME }}"
+          git push origin master
+          cd ../ && rm -rf code/
 
       - name: Git push assets to "release" branch
         run: |
           git init
           git checkout -b release
-          git add *.sha256sum china-list.dat china-list.dat.xz
+          git add china-list.dat*
           git commit -m "${{ env.RELEASE_NAME }}"
-          git remote add origin "git@github.com:${{ github.repository }}"
+          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin release
 
       - name: Create a release
