@@ -19,6 +19,9 @@ jobs:
           echo "RELEASE_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
           echo "TAG_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
         shell: bash
+      - name: Sleep 5 min
+        run: |
+          sleep 5m
       - name: Checkout codebase
         uses: actions/checkout@v2.3.4
         with:
@@ -26,7 +29,6 @@ jobs:
       - name: Build china-list.dat file
         run: |
           cd code/ || exit 1
-          git pull --rebase
           go run ./ --outputdir=../
           cd ../ && rm -rf code/
       - name: Generate china-list.dat sha256 hash
