@@ -81,49 +81,14 @@ jobs:
           git commit -m "${{ env.RELEASE_NAME }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin release
-      - name: Create a release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release and upload assets
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: ${{ env.RELEASE_NAME }}
           draft: false
           prerelease: false
-      - name: Upload china-list.dat
-        uses: actions/upload-release-asset@v1
+          files: |
+            china-list.dat*
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./china-list.dat
-          asset_name: china-list.dat
-          asset_content_type: application/octet-stream
-      - name: Upload china-list.dat sha256sum
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./china-list.dat.sha256sum
-          asset_name: china-list.dat.sha256sum
-          asset_content_type: text/plain
-      - name: Upload china-list.dat.xz
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./china-list.dat.xz
-          asset_name: china-list.dat.xz
-          asset_content_type: application/octet-stream
-      - name: Upload china-list.dat.xz sha256sum
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./china-list.dat.xz.sha256sum
-          asset_name: china-list.dat.xz.sha256sum
-          asset_content_type: text/plain
