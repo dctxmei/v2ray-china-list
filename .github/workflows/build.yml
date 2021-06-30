@@ -26,6 +26,7 @@ jobs:
       - name: Build china-list.dat file
         run: |
           cd code/ || exit 1
+          git pull --rebase
           go run ./ --outputdir=../
           cd ../ && rm -rf code/
       - name: Generate china-list.dat sha256 hash
