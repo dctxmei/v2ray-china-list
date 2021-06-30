@@ -23,8 +23,6 @@ jobs:
         shell: bash
       - name: Checkout codebase
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Create `accelerated-domains.china`, `google.china` and `apple.china` lists
         run: |
           curl -sSL "${CHINA_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/accelerated-domains.china
@@ -58,10 +56,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: code
-          fetch-depth: 0
       - name: Build china-list.dat file
         run: |
           cd code/ || exit 1
+          git pull --rebase
           go run ./ --outputdir=../
           cd ../ && rm -rf code/
       - name: Generate china-list.dat sha256 hash
