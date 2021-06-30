@@ -1,4 +1,4 @@
-name: Build china-list.dat
+name: Pull and Build china-list.dat
 on:
   schedule:
     - cron: '0 0 * * *'
@@ -10,68 +10,69 @@ on:
       - 'data/*'
       - 'LICENSE'
 jobs:
-  build:
-    name: Build
+  pull:
+    name: Pull
     runs-on: ubuntu-latest
-
     steps:
-      - name: Setup Go 1.x.y
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-
       - name: Set variables
         run: |
-          echo "RELEASE_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-          echo "TAG_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-
           echo "CHINA_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf" >> $GITHUB_ENV
           echo "GOOGLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/google.china.conf" >> $GITHUB_ENV
           echo "APPLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/apple.china.conf" >> $GITHUB_ENV
         shell: bash
-
       - name: Checkout codebase
         uses: actions/checkout@v2.3.4
         with:
           path: code
-
       - name: Create `accelerated-domains.china`, `google.china` and `apple.china` lists
         run: |
           cd code/ || exit 1
           curl -sSL "${CHINA_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/accelerated-domains.china
           curl -sSL "${GOOGLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/google.china
           curl -sSL "${APPLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/apple.china
-          cd ../
-
-      - name: Build china-list.dat file
-        run: |
-          cd code/ || exit 1
-          go run ./ --outputdir=../
-          cd ../
-
-      - name: Generate china-list.dat sha256 hash
-        run: |
-          sha256sum china-list.dat > china-list.dat.sha256sum
-
-      - name: Generate XZ
-        run: |
-          xz -z -9 -k china-list.dat
-          sha256sum china-list.dat.xz > china-list.dat.xz.sha256sum
-
       - name: Configuration environment
         run: |
           git config --global user.email "dctxmei@yandex.com"
           git config --global user.name "Dct Mei"
-
       - name: Git push assets to "master" branch
         continue-on-error: true
         run: |
-          cd code/ || exit 1
           git add data/
           git commit -m "${{ env.RELEASE_NAME }}"
           git push origin master
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go 1.x.y
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16
+      - name: Set variables
+        run: |
+          echo "RELEASE_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+          echo "TAG_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+        shell: bash
+      - name: Checkout codebase
+        uses: actions/checkout@v2.3.4
+        with:
+          path: code
+      - name: Build china-list.dat file
+        run: |
+          cd code/ || exit 1
+          go run ./ --outputdir=../
           cd ../ && rm -rf code/
-
+      - name: Generate china-list.dat sha256 hash
+        run: |
+          sha256sum china-list.dat > china-list.dat.sha256sum
+      - name: Generate XZ
+        run: |
+          xz -z -9 -k china-list.dat
+          sha256sum china-list.dat.xz > china-list.dat.xz.sha256sum
+      - name: Configuration environment
+        run: |
+          git config --global user.email "dctxmei@yandex.com"
+          git config --global user.name "Dct Mei"
       - name: Git push assets to "release" branch
         run: |
           git init
@@ -80,7 +81,6 @@ jobs:
           git commit -m "${{ env.RELEASE_NAME }}"
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin release
-
       - name: Create a release
         id: create_release
         uses: actions/create-release@v1
@@ -91,7 +91,6 @@ jobs:
           release_name: ${{ env.RELEASE_NAME }}
           draft: false
           prerelease: false
-
       - name: Upload china-list.dat
         uses: actions/upload-release-asset@v1
         env:
@@ -101,7 +100,6 @@ jobs:
           asset_path: ./china-list.dat
           asset_name: china-list.dat
           asset_content_type: application/octet-stream
-
       - name: Upload china-list.dat sha256sum
         uses: actions/upload-release-asset@v1
         env:
@@ -111,7 +109,6 @@ jobs:
           asset_path: ./china-list.dat.sha256sum
           asset_name: china-list.dat.sha256sum
           asset_content_type: text/plain
-
       - name: Upload china-list.dat.xz
         uses: actions/upload-release-asset@v1
         env:
@@ -121,7 +118,6 @@ jobs:
           asset_path: ./china-list.dat.xz
           asset_name: china-list.dat.xz
           asset_content_type: application/octet-stream
-
       - name: Upload china-list.dat.xz sha256sum
         uses: actions/upload-release-asset@v1
         env:
