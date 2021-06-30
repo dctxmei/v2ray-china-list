@@ -22,16 +22,14 @@ jobs:
           echo "APPLE_DOMAINS_URL=https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/apple.china.conf" >> $GITHUB_ENV
         shell: bash
       - name: Checkout codebase
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2
         with:
-          path: code
+          fetch-depth: 0
       - name: Create `accelerated-domains.china`, `google.china` and `apple.china` lists
         run: |
-          cd code/ || exit 1
           curl -sSL "${CHINA_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/accelerated-domains.china
           curl -sSL "${GOOGLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/google.china
           curl -sSL "${APPLE_DOMAINS_URL}" | awk -F '/' '{print $2}' > data/apple.china
-          cd ../
       - name: Configuration environment
         run: |
           git config --global user.email "dctxmei@yandex.com"
@@ -39,11 +37,9 @@ jobs:
       - name: Git push assets to "master" branch
         continue-on-error: true
         run: |
-          cd code/ || exit 1
           git add data/
           git commit -m "${{ env.RELEASE_NAME }}"
           git push origin master
-          cd ../ && rm -rf code/
   build:
     name: Build china-list.dat
     needs: pull
@@ -59,9 +55,10 @@ jobs:
           echo "TAG_NAME=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
         shell: bash
       - name: Checkout codebase
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2
         with:
           path: code
+          fetch-depth: 0
       - name: Build china-list.dat file
         run: |
           cd code/ || exit 1
